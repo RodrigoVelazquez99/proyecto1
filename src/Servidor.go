@@ -1,17 +1,37 @@
 package main
 
+/* Controla el serivdor */
 import (
+	"bufio"
 	"fmt"
 	"net"
-	"os"
 )
 
-/* Controla el serivdor */
-
-func creaServidor() {
-	direccion, conexion := net.ResolveTCPAddr("tcp", "192.168.0.16")
+/* Inicia un servidor */
+func creaServidor(ip string) {
+	direccion, conexion := net.ResolveTCPAddr("tcp", ip)
 	if conexion != nil {
-		fmt.Fprintln("Ocurrio un error en el servidor")
-		os.Exit(1)
+		fmt.Println(conexion.Error())
+	}
+	servidor, conexion1 := net.ListenTCP("tcp", direccion)
+	if conexion1 != nil {
+		fmt.Println("No se creo el servidor")
+	}
+	ejecutaServidor(direccion, servidor)
+}
+
+func ejecutaServidor(direccion *net.TCPAddr, servidor net.Listener) {
+	for {
+		conexion, disponible := servidor.Accept()
+		if disponible != nil {
+			fmt.Println("Esperando conexion")
+			continue
+		}
+		mensaje, _ := bufio.NewReader(conexion).ReadString('\n')
+		fmt.Println(mensaje)
+		conexion.Write([]byte(mensaje))
+		if mensaje == "close" {
+			conexion.Close()
+		}
 	}
 }
