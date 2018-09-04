@@ -8,13 +8,12 @@ import (
 
 /* Inicia un servidor */
 func main() {
+
 	fmt.Println("Iniciando el servidor ")
 
-	servidor, conexion1 := net.Listen("tcp", "localhost:8080")
+	servidor, conexion1 := net.Listen("tcp", ":8080")
 
-	if conexion1 != nil {
-		fmt.Println("No se creo el servidor")
-	}
+	revisaError(conexion1)
 
 	conexion, disponible := servidor.Accept()
 
@@ -29,5 +28,11 @@ func main() {
 		if mensaje == "close" {
 			conexion.Close()
 		}
+	}
+}
+
+func revisaError(err error) {
+	if err != nil {
+		fmt.Println("Fallo la conexion al servidor")
 	}
 }
