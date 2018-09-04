@@ -6,12 +6,19 @@ import (
 	"net"
 )
 
+type Usuario struct {
+	nombre string
+}
+
+/* Lista de los usuarios del chat */
+listaUsuarios := list.New()
+
 /* Inicia un servidor */
 func main() {
 
 	fmt.Println("Iniciando el servidor ")
 
-	servidor, conexion1 := net.Listen("tcp", ":8080")
+	servidor, conexion1 := net.Listen("tcp", "localhost:8080")
 
 	revisaError(conexion1)
 
