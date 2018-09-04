@@ -1,6 +1,5 @@
 package main
 
-/* Controla el serivdor */
 import (
 	"bufio"
 	"fmt"
@@ -8,19 +7,14 @@ import (
 )
 
 /* Inicia un servidor */
-func creaServidor(ip string) {
-	direccion, conexion := net.ResolveTCPAddr("tcp", ip)
-	if conexion != nil {
-		fmt.Println(conexion.Error())
-	}
-	servidor, conexion1 := net.ListenTCP("tcp", direccion)
+func main() {
+
+	servidor, conexion1 := net.Listen("tcp", "localhost:8080")
+
 	if conexion1 != nil {
 		fmt.Println("No se creo el servidor")
 	}
-	ejecutaServidor(direccion, servidor)
-}
 
-func ejecutaServidor(direccion *net.TCPAddr, servidor net.Listener) {
 	for {
 		conexion, disponible := servidor.Accept()
 		if disponible != nil {

@@ -6,8 +6,9 @@ import (
 	"net"
 )
 
-func nuevoUsuario() {
-	direccion, errl := net.ResolveTCPAddr("tcp", "192.168.0.16:8080")
+func main () {
+
+	direccion, errl := net.ResolveTCPAddr("tcp", "localhost:8080")
 	if errl != nil {
 		errl.Error()
 	}
