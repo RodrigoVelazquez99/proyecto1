@@ -4,11 +4,20 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"os"
 )
 
-func main () {
-
-	direccion, errl := net.ResolveTCPAddr("tcp", "localhost:8080")
+func main() {
+	if len(os.Args) != 3 {
+		fmt.Println("No agregaste correctamente los datos del puerto y direccion")
+		os.Exit(1)
+	}
+	direccionIP := os.Args[1]
+	puerto := os.Args[2]
+	var nuevoUsuario Usuario
+	fmt.Println("Introduce el nombre de usuario")
+	fmt.Scanln(&nuevoUsuario.nombre)
+	direccion, errl := net.ResolveTCPAddr("tcp", direccionIP+":"+puerto)
 	if errl != nil {
 		errl.Error()
 	}
