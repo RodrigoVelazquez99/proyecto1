@@ -1,30 +1,34 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 )
 
 func main() {
 	if len(os.Args) != 3 {
-		fmt.Println("No agregaste correctamente los datos del puerto y direccion")
+		fmt.Println("No agregaste correctamente los datos de la direccion y puerto")
 		os.Exit(1)
 	}
 	direccionIP := os.Args[1]
 	puerto := os.Args[2]
-	var nuevoUsuario Usuario
+	var nombre string
 	fmt.Println("Introduce el nombre de usuario")
-	fmt.Scanln(&nuevoUsuario.nombre)
-	direccion, errl := net.ResolveTCPAddr("tcp", direccionIP+":"+puerto)
-	if errl != nil {
-		errl.Error()
-	}
-	user, err := net.DialTCP("tcp", nil, direccion)
+	fmt.Scanln(&nombre)
+	fmt.Println("Bienvenido" + nombre)
+	//agregaUsuario(nombre)
+	conexion, err := net.Dial("tcp", direccionIP+":"+puerto)
 	if err != nil {
 		err.Error()
 	}
-	mensaje, _ := ioutil.ReadAll(user)
-	fmt.Println(string(mensaje))
+	for {
+		informacionDevuelta := bufio.NewReader(os.Stdin)
+		fmt.Print(nombre + ">")
+		lector, _ := informacionDevuelta.ReadString('\n')
+		fmt.Fprintf(conexion, lector+"\n")
+		mensaje, _ := bufio.NewReader(conexion).ReadString('\n')
+		fmt.Print(string(mensaje))
+	}
 }

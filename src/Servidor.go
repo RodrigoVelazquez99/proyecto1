@@ -4,21 +4,23 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"os"
 )
 
 type Usuario struct {
 	nombre string
 }
 
-/* Lista de los usuarios del chat */
-listaUsuarios := list.New()
+var listaUsuarios []Usuario
 
 /* Inicia un servidor */
 func main() {
 
-	fmt.Println("Iniciando el servidor ")
+	fmt.Println("Iniciando el servidor ..... ")
 
 	servidor, conexion1 := net.Listen("tcp", "localhost:8080")
+
+	listaUsuarios = make([]Usuario, 1)
 
 	revisaError(conexion1)
 
@@ -29,17 +31,28 @@ func main() {
 			fmt.Println("Esperando conexion")
 			continue
 		}
-		mensaje, _ := bufio.NewReader(conexion).ReadString('\n')
-		fmt.Println(string(mensaje))
-		conexion.Write([]byte(mensaje))
-		if mensaje == "close" {
-			conexion.Close()
-		}
+		manejaCliente(conexion)
 	}
+}
+
+func agregaUsuario(nombre string) {
+	var nuevoUsuario Usuario
+	nuevoUsuario.nombre = nombre
+	listaUsuarios = append(listaUsuarios, nuevoUsuario)
 }
 
 func revisaError(err error) {
 	if err != nil {
 		fmt.Println("Fallo la conexion al servidor")
 	}
+}
+
+func manejaCliente(conexion net.Conn) {
+	mensaje, _ := bufio.NewReader(conexion).ReadString('\n')
+	fmt.Println(string(mensaje))
+	conexion.Write([]byte(mensaje))
+	if mensaje == "/close" {
+		os.Exit(1)
+	}
+
 }
