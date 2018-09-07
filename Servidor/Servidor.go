@@ -5,14 +5,8 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"github.com/RodrigoVelazquez99/proyecto1/Usuario"
 )
-
-type Usuario struct {
-	nombre string
-	conexion net.Conn
-}
-
-var listaUsuarios []Usuario
 
 /* Inicia un servidor */
 func main() {
@@ -26,8 +20,6 @@ func main() {
 
 	servidor, conexion1 := net.Listen("tcp", os.Args[1] + ":" + os.Args[2])
 
-	listaUsuarios = make([]Usuario, 1)
-
 	revisaError(conexion1)
 
 	for {
@@ -40,13 +32,6 @@ func main() {
 	}
 }
 
-func agregaUsuario(nombre string, conexion net.Conn) {
-	var nuevoUsuario Usuario
-	nuevoUsuario.nombre = nombre
-	nuevoUsuario.conexion = conexion
-	listaUsuarios = append(listaUsuarios, nuevoUsuario)
-}
-
 func revisaError(err error) {
 	if err != nil {
 		fmt.Println("Fallo la conexion al servidor")
@@ -54,12 +39,7 @@ func revisaError(err error) {
 }
 
 func manejaCliente(conexion net.Conn) {
-	var usuarioActual string
-	for _, u  := range listaUsuarios {
-		if u.conexion == conexion {
-		usuarioActual = u.nombre
-		}
-	}
+	usuarioActual := Usuario.BuscaUsuario(conexion)
 	for {
 		mensaje, _ := bufio.NewReader(conexion).ReadString('\n')
 		fmt.Println(usuarioActual + ": " + string(mensaje))
