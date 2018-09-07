@@ -8,6 +8,7 @@ import (
 	"log"
 	"io"
 )
+
 var listaConexiones []net.Conn
 
 func main() {
@@ -45,10 +46,10 @@ func manejaCliente(conexion net.Conn) {
 	mensaje := make([]byte,256)
 	for  {
 		for  {
-			cadena, err := conexion.Read(buffer)
+			cadena, err := conexion.Read(mensaje)
 			if err != nill{
 				if err == io.EOF {
-					log.Println("Ocurrio un error")
+					fmt.Println("Ocurrio un error")
 					os.Exit(1)
 				}
 				os.Exit(1)
@@ -56,9 +57,12 @@ func manejaCliente(conexion net.Conn) {
 			mensaje = bytes.Trim(mensaje[:cadena], "\x00")
 		}
 		enviaClientes(mensaje, conexion)
+		mensaje = make([]byte, 0)
 	}
 }
 
 func enviaClientes(mensaje byte[], cliente net.Conn){
-
+	for _, conexion := range listaConexiones {
+		conexion.Write(mensaje)
+	}
 }
