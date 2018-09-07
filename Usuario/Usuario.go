@@ -1,32 +1,28 @@
 package Usuario
 
 import "net"
+import "fmt"
 
-type User struct{
-  nombre string
-  conexion net.Conn
-}
+var listaUsuarios map[string]net.Conn
 
-var listaUsuarios []User
-
-func GetUsuarios() []User{
-  return listaUsuarios
-}
-
-func IncializaUsuarios(){
-  listaUsuarios = make([]User, 1)
+func InicializaUsuarios(){
+  listaUsuarios = make(map[string]net.Conn)
 }
 
 func AgregaUsuario(nuevoNombre string, nuevaConexion net.Conn) {
-  nuevoUsuario := User{ nombre: nuevoNombre, conexion: nuevaConexion }
-  listaUsuarios = append(listaUsuarios, nuevoUsuario)
+  listaUsuarios[nuevoNombre] = nuevaConexion
+  fmt.Println(listaUsuarios)
 }
 
 func BuscaUsuario(conexion net.Conn) string {
-  for _, usuario := range listaUsuarios {
-    if conexion == usuario.conexion{
-      return usuario.nombre
+  for llave, valor := range listaUsuarios {
+    if valor == conexion{
+      return llave
     }
   }
   return ""
+}
+
+func GetUsuarios() map[string]net.Conn{
+  return listaUsuarios
 }

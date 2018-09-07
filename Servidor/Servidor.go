@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"github.com/RodrigoVelazquez99/proyecto1/Usuario"
+	"log"
+	"io"
 )
+var listaConexiones []net.Conn
 
-/* Inicia un servidor */
 func main() {
 
 	if len(os.Args) != 3 {
@@ -16,37 +17,48 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("  Iniciando el servidor ..... ")
-
-	servidor, conexion1 := net.Listen("tcp", os.Args[1] + ":" + os.Args[2])
-
-	revisaError(conexion1)
+	fmt.Println("  Iniciando el servidor .....  ")
+	servidor, err := net.Listen("tcp", os.Args[1] + ":" + os.Args[2])
+ 	revisaError(err)
+	listaConexiones = make([]net.Conn,1)
 
 	for {
 		conexion, disponible := servidor.Accept()
+		listaConexiones = append(listaConexiones, conexion)
 		if disponible != nil {
-			fmt.Println("Esperando conexion")
+			fmt.Println("Conexion fallida")
 			os.Exit(1)
 		}
-		 manejaCliente(conexion)
+		go manejaCliente(conexion)
 	}
 }
 
 func revisaError(err error) {
 	if err != nil {
 		fmt.Println("Fallo la conexion al servidor")
+		os.Exit(1)
 	}
 }
 
 func manejaCliente(conexion net.Conn) {
-	usuarioActual := Usuario.BuscaUsuario(conexion)
-	for {
-		mensaje, _ := bufio.NewReader(conexion).ReadString('\n')
-		fmt.Println(usuarioActual + ": " + string(mensaje))
-		conexion.Write([]byte(mensaje))
-		if mensaje == "/close" {
-			conexion.Close()
-			break
+	defer conexion.Close()
+	mensaje := make([]byte,256)
+	for  {
+		for  {
+			cadena, err := conexion.Read(buffer)
+			if err != nill{
+				if err == io.EOF {
+					log.Println("Ocurrio un error")
+					os.Exit(1)
+				}
+				os.Exit(1)
+			}
+			mensaje = bytes.Trim(mensaje[:cadena], "\x00")
 		}
+		enviaClientes(mensaje, conexion)
 	}
+}
+
+func enviaClientes(mensaje byte[], cliente net.Conn){
+
 }

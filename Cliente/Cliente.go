@@ -26,8 +26,6 @@ func main() {
 		err.Error()
 	}
 
-	Usuario.AgregaUsuario(nombre, conexion)
-
 	for {
 
 		informacionDevuelta := bufio.NewReader(os.Stdin)
