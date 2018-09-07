@@ -22,8 +22,8 @@ func AgregaUsuario(nuevoNombre string, nuevaConexion net.Conn) {
   listaUsuarios = append(listaUsuarios, nuevoUsuario)
 }
 
-func buscaUsuario(conexion net.Conn) string {
-  for _,usuario := range var {
+func BuscaUsuario(conexion net.Conn) string {
+  for _, usuario := range listaUsuarios {
     if conexion == usuario.conexion{
       return usuario.nombre
     }
