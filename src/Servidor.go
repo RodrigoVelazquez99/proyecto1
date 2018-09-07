@@ -30,15 +30,16 @@ func main() {
 
 	revisaError(conexion1)
 
-	//conexion, disponible := servidor.Accept()
-
 	for {
 		conexion, disponible := servidor.Accept()
 		if disponible != nil {
 			fmt.Println("Esperando conexion")
-			continue
+			os.Exit(1)
 		}
 		 manejaCliente(conexion)
+		 if len(listaUsuarios) == 0 {
+			 break
+		 }
 	}
 }
 
@@ -58,7 +59,7 @@ func revisaError(err error) {
 func manejaCliente(conexion net.Conn) {
 	var usuarioActual string
 	for _, u  := range listaUsuarios {
-		if u.conexion == conexion{
+		if u.conexion == conexion {
 		usuarioActual = u.nombre
 		}
 	}
@@ -68,7 +69,6 @@ func manejaCliente(conexion net.Conn) {
 		conexion.Write([]byte(mensaje))
 		if mensaje == "/close" {
 			conexion.Close()
-			os.Exit(1)
 			break
 		}
 	}
