@@ -24,12 +24,9 @@ func main() {
 	listaConexiones = make([]net.Conn,1)
 
 	for {
-		conexion, disponible := servidor.Accept()
+		conexion, err1 := servidor.Accept()
 		listaConexiones = append(listaConexiones, conexion)
-		if disponible != nil {
-			fmt.Println("Conexion fallida")
-			os.Exit(1)
-		}
+		revisaError(err1)
 		go manejaCliente(conexion)
 	}
 }
@@ -49,10 +46,8 @@ func manejaCliente(conexion net.Conn) {
 			cadena, err := conexion.Read(mensaje)
 			if err != nill{
 				if err == io.EOF {
-					fmt.Println("Ocurrio un error")
-					os.Exit(1)
+					break
 				}
-				os.Exit(1)
 			}
 			mensaje = bytes.Trim(mensaje[:cadena], "\x00")
 		}
@@ -63,6 +58,6 @@ func manejaCliente(conexion net.Conn) {
 
 func enviaClientes(mensaje byte[], cliente net.Conn){
 	for _, conexion := range listaConexiones {
-		conexion.Write(mensaje)
+		conexion.Write([]byte(mensaje))
 	}
 }
