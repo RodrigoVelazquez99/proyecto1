@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"github.com/RodrigoVelazquez99/proyecto1/Usuario"
 )
 
 func main() {
@@ -15,15 +16,18 @@ func main() {
 	}
 
 	var nombre string
+
 	fmt.Println("Introduce el nombre de usuario")
-	fmt.Scanln(&nombre)
+	fmt.Scanln(& nombre)
 	fmt.Println("Bienvenido " + nombre)
 	conexion, err := net.Dial("tcp", os.Args[1] + ":" + os.Args[2])
 
 	if err != nil {
 		err.Error()
 	}
-	//Servidor.agregaUsuario(nombre, conexion)
+
+	Usuario.AgregaUsuario(nombre, conexion)
+
 	for {
 
 		informacionDevuelta := bufio.NewReader(os.Stdin)

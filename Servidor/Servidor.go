@@ -37,9 +37,6 @@ func main() {
 			os.Exit(1)
 		}
 		 manejaCliente(conexion)
-		 if len(listaUsuarios) == 0 {
-			 break
-		 }
 	}
 }
 
