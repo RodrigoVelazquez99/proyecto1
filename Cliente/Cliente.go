@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"github.com/RodrigoVelazquez99/proyecto1/Usuario"
 )
 
 func main() {
@@ -17,23 +16,43 @@ func main() {
 
 	var nombre string
 
-	fmt.Println("Introduce el nombre de usuario")
+	fmt.Println(" Introduce el nombre de usuario ")
 	fmt.Scanln(& nombre)
 	fmt.Println("Bienvenido " + nombre)
-	conexion, err := net.Dial("tcp", os.Args[1] + ":" + os.Args[2])
-
-	if err != nil {
-		err.Error()
+	var conexion net.Conn
+	var err error
+	for {
+		conexion, err = net.Dial("tcp", os.Args[1] + ":" + os.Args[2])
+		revisaError(err)
 	}
 
-	for {
+	defer conexion.Close()
+	go recibeMensajes(conexion)
+	enviaMensajes(conexion, nombre)
 
-		informacionDevuelta := bufio.NewReader(os.Stdin)
+}
+
+func enviaMensajes(conexion net.Conn, nombre string){
+	for {
 		fmt.Print(nombre + ">")
+		mensaje, _ := bufio.NewReader(conexion).ReadString('\n')
+		mensaje = nombre + ":" + mensaje
+		conexion.Write([]byte(mensaje))
+	}
+}
+
+func recibeMensajes(conexion net.Conn) {
+	for {
+		informacionDevuelta := bufio.NewReader(os.Stdin)
 		lector, _ := informacionDevuelta.ReadString('\n')
 		fmt.Fprintf(conexion, lector+"\n")
-		mensaje, _ := bufio.NewReader(conexion).ReadString('\n')
-		fmt.Print(string(mensaje))
+	}
+}
 
+
+func revisaError(err error) {
+	if err != nil {
+		fmt.Println("Fallo la conexion al servidor")
+		os.Exit(1)
 	}
 }
