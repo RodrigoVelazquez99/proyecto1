@@ -1,12 +1,11 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"net"
 	"os"
-	"log"
 	"io"
+	"bytes"
 )
 
 var listaConexiones []net.Conn
@@ -40,24 +39,29 @@ func revisaError(err error) {
 
 func manejaCliente(conexion net.Conn) {
 	defer conexion.Close()
-	mensaje := make([]byte,256)
+	var mensaje []byte
+	buffer := make([]byte,256)
 	for  {
 		for  {
-			cadena, err := conexion.Read(mensaje)
-			if err != nill{
+			cadena, err := conexion.Read(buffer)
+			if err != nil{
 				if err == io.EOF {
 					break
 				}
 			}
-			mensaje = bytes.Trim(mensaje[:cadena], "\x00")
+			buffer = bytes.Trim(buffer[:cadena], "\x00")
+			mensaje = append(mensaje,buffer...)
+			if mensaje[len(mensaje)-1] == 10 {
+				break
+			}
 		}
-		enviaClientes(mensaje, conexion)
+		enviaMensajes(mensaje, conexion)
 		mensaje = make([]byte, 0)
 	}
 }
 
-func enviaClientes(mensaje byte[], cliente net.Conn){
+func enviaMensajes(mensaje []byte, cliente net.Conn){
 	for _, conexion := range listaConexiones {
-		conexion.Write([]byte(mensaje))
+		conexion.Write(mensaje)
 	}
 }

@@ -23,7 +23,9 @@ func main() {
 	var err error
 	for {
 		conexion, err = net.Dial("tcp", os.Args[1] + ":" + os.Args[2])
-		revisaError(err)
+		if err == nil{
+			break
+		}
 	}
 
 	defer conexion.Close()
@@ -45,7 +47,7 @@ func recibeMensajes(conexion net.Conn) {
 	for {
 		informacionDevuelta := bufio.NewReader(os.Stdin)
 		lector, _ := informacionDevuelta.ReadString('\n')
-		fmt.Fprintf(conexion, lector+"\n")
+		fmt.Fprintf(conexion, lector + "\n")
 	}
 }
 
