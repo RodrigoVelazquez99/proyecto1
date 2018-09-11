@@ -10,7 +10,7 @@
 	var nombre string
 
 	func main() {
-
+		
 		if len(os.Args) != 3 {
 			fmt.Println("No agregaste correctamente los datos de la direccion y puerto")
 			os.Exit(1)
