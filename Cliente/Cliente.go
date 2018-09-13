@@ -7,20 +7,15 @@
 		"os"
 		"strings"
 	)
-	var nombre string
+
 
 	func main() {
-		
+
 		if len(os.Args) != 3 {
 			fmt.Println("No agregaste correctamente los datos de la direccion y puerto")
 			os.Exit(1)
 		}
-		fmt.Println(" Introduce el nombre de usuario ")
-		fmt.Scanln(& nombre)
-		fmt.Println("Bienvenido " + nombre)
-		fmt.Println("				Comandos del chat" + "\n" +
-										"/close		Cerrar sesion	  	" + "\n" +
-										"/" + "\n" )
+
 		var conexion net.Conn
 		var err error
 		for {
@@ -36,24 +31,23 @@
 	}
 
 	func enviaMensajes(conexion net.Conn){
-		online := true
 		for {
-			for  online {
+			/*for  online {
 				conexion.Write([]byte(nombre + " se ha conectado" + "\n"))
 				online = false
-			}
-			fmt.Print(nombre + ">")
+			}*/
+			//fmt.Print(nombre + ">")
 			lector := bufio.NewReader(os.Stdin)
 			mensaje, err := lector.ReadString('\n')
-			if strings.Contains(mensaje, "/close") {
-				fmt.Fprintf(conexion, nombre + " se ha desconectado " + "\n")
+			if strings.Contains(mensaje, "DISCONNECT") {
+				//fmt.Fprintf(conexion, nombre + " se ha desconectado " + "\n")
 				break
 			}
 			if err != nil {
 				break
 			}
-			mensaje = nombre + ":" + mensaje
-			fmt.Fprintf(conexion, mensaje)
+			//fmt.Fprintf(conexion, mensaje)
+			conexion.Write([]byte(mensaje))
 		}
 	}
 
@@ -63,7 +57,7 @@
 			if err != nil {
 				break
 			}
-			fmt.Print("\n" + string(informacionDevuelta))
+			fmt.Print(string(informacionDevuelta))
 		}
 	}
 
