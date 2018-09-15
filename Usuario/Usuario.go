@@ -110,7 +110,7 @@
     }
   }
 
-  func CreaSala(conexion net.Conn, sala string)  {
+  func creaSala(conexion net.Conn, sala string)  {
     admin := BuscaUsuarioPorConexion(conexion)
     usuarios := make([]Usuario, 0)
     usuarios = append(usuarios, admin)
@@ -142,105 +142,49 @@
     conexion.Close()
   }
 
-
-
-  /**
-  * Metodo que
-  * @return bandera la bandera del mensaje
-  * @return destinatarios la lista de destinatarios
-  * @return mensaje el mensaje a enviar
-  */
-  func opcionesMensaje(arr []byte, conexionActual net.Conn) (string, string, []Usuario, string) {
-  	entrada := string(arr)
-  	bandera, tipo := identificaBandera(conexionActual, entrada)
-    switch bandera {
-    case "USUARIO_NO_IDENTIFICADO":
-      return "USUARIO_NO_IDENTIFICADO", tipo, nil, entrada
-    case "SIN_BANDERA":
-      return "SIN_BANDERA", tipo, nil, entrada
-    }
-
-    if tipo == "SOLICITUD" {
-      return bandera, tipo, nil, entrada
-    }
-
-    destinatarios, mensaje := identificaDestinatario(bandera,entrada, conexionActual)
-    return bandera, tipo, destinatarios, mensaje
-  }
-
-  func capturaNombres(bandera string, entrada string) (string, []net.Conn) {
-    conexiones := make([]net.Conn, 0)
-    mensaje := string(entrada)
-    var nombre string
-    var sala string
-    if bandera == "IDENTIFY" {
-      for i := 9; i < len(mensaje) ; i++ {
-        nombre += string(mensaje[i])
-      }
-    } else if bandera == "INVITE" {
-      sala := ""
-      tmp := ""
-      j := 7
-      for j < len(mensaje) {
-         tmp += string(mensaje[j])
-         j++
-        if string(mensaje[j]) == " " && string(mensaje[j]) != "\n" {
-          if sala != "" {
-            nombre = tmp
-            usuario := BuscaUsuarioPorNombre(nombre)
-            conexiones = append(conexiones, usuario.conexion)
-            tmp = ""
-            j++
-          } else {
-            sala = tmp
-            tmp = ""
-            j++
-          }
-        }
-      }
-    }
-    return sala, conexiones
-  }
-
   func cambiaEstado(conexion net.Conn, estado string)  {
     usuario := BuscaUsuarioPorConexion(conexion)
     usuario.estado = estado
   }
 
-  func manejaSolicitud(bandera string, conexion net.Conn, entrada string) (string, []Usuario) {
-    switch bandera {
-    case "IDENTIFY":
-      _, nombres := capturaNombres(bandera, entrada)
-      nombre := nombres[0]
-      usuario := BuscaUsuarioPorConexion(nombre)
-      RegistraUsuarioNuevo(conexion,usuario.nombre,"SALA_GLOBAL")
-      vecinos := BuscaUsuariosPorSala(conexion)
-      mensaje := usuario.nombre + " se ha conectado"
-      return mensaje, vecinos
-    case "STATUS":
-      vecinos := BuscaUsuariosPorSala(conexion)
-      palabras := separaPalabras(entrada)
-      estado := palabras[1]
-      usuario := BuscaUsuarioPorConexion(conexion)
-      cambiaEstado(conexion, estado)
-      mensaje := usuario.nombre  + " ha cambiado su estado a: " + estado
-      return mensaje, vecinos
-    case "USERS":
-      usuarios := ObtenerListaUsuarios()
-      return usuarios, nil
-    case "CREATEROOM":
-      palabras := separaPalabras(entrada)
-      sala := palabras[1]
-      CreaSala(conexion, sala)
-      break
-    case "DISCONNECT":
-      usuario := BuscaUsuarioPorConexion(conexion)
-      vecinos := BuscaUsuariosPorSala(conexion)
-      desconectaUsuario(conexion)
-      mensaje := "Se ha desconectado " + usuario.nombre
-      return mensaje, vecinos
-    }
-    return "", nil
+
+  func IdentificaUsuario(entrada string, conexion net.Conn) ([]Usuario, string)  {
+    palabras := separaPalabras(entrada)
+    nombre := palabras[1]
+    RegistraUsuarioNuevo(conexion,nombre,"SALA_GLOBAL")
+    destinatarios := BuscaUsuariosPorSala(conexion)
+    mensaje := nombre + " se ha conectado"
+    return destinatarios, mensaje
+  }
+
+  func CapturaEstado(entrada string, conexion net.Conn) ([]Usuario, string) {
+    destinatarios := BuscaUsuariosPorSala(conexion)
+    palabras := separaPalabras(entrada)
+    estado := palabras[1]
+    usuario := BuscaUsuarioPorConexion(conexion)
+    cambiaEstado(conexion, estado)
+    mensaje := usuario.nombre  + " ha cambiado su estado a: " + estado
+    return destinatarios, mensaje
+  }
+
+  func DevuelveUsuarios() string {
+    usuarios := ObtenerListaUsuarios()
+    return usuarios
+  }
+
+  func NuevaSala(entrada string, conexion net.Conn)  {
+    palabras := separaPalabras(entrada)
+    sala := palabras[1]
+    creaSala(conexion, sala)
+  }
+
+
+  func Desconecta(conexion net.Conn) ([]Usuario, string) {
+    usuario := BuscaUsuarioPorConexion(conexion)
+    destinatarios := BuscaUsuariosPorSala(conexion)
+    desconectaUsuario(conexion)
+    mensaje := "Se ha desconectado " + usuario.nombre
+    return destinatarios, mensaje
   }
 
 
@@ -260,11 +204,8 @@ func separaPalabras(entrada string) []string {
   return palabras
  }
 
-  /***
-  *@return destinatarios los usuarios que reciben el mensaje
-  *@return mensaje el mensaje
-  */
-  func capturaMensaje(entrada string) ([]Usuario, string) {
+
+  func CapturaMensaje(entrada string) ([]Usuario, string) {
     destinatarios := make([]Usuario, 0)
     palabras := separaPalabras(entrada)
     destinatario := BuscaUsuarioPorNombre(palabras[1])
@@ -273,7 +214,7 @@ func separaPalabras(entrada string) []string {
     return destinatarios,mensaje
   }
 
-  func capturaMensajePublico(entrada string) ([]Usuario, string) {
+  func CapturaMensajePublico(entrada string) ([]Usuario, string) {
     destinatarios := make([]Usuario, 0)
     palabras := separaPalabras(entrada)
     mensaje := palabras[1]
@@ -281,7 +222,7 @@ func separaPalabras(entrada string) []string {
     return destinatarios, mensaje
   }
 
-  func invitaUsuarios(entrada string) (string, []Usuario) {
+  func InvitaUsuarios(entrada string) ([]Usuario, string) {
     destinatarios := make([]Usuario, 0)
     palabras := separaPalabras(entrada)
     sala := palabras[1]
@@ -290,15 +231,16 @@ func separaPalabras(entrada string) []string {
       usuario = BuscaUsuarioPorNombre(palabras[i])
       destinatarios = append(destinatarios, usuario )
     }
-    return sala, destinatarios
+    return destinatarios, sala
   }
 
-  func aceptarSolicitud(entrada string)  {
+  func AceptarSolicitud(entrada string)  {
     palabras := separaPalabras(entrada)
     sala := palabras[1]
+    //  BUG:
   }
 
-  func mensajeSala(entrada string) ([]Usuario, string) {
+  func MensajeSala(entrada string) ([]Usuario, string) {
     palabras := separaPalabras(entrada)
     sala := palabras[1]
     mensaje := palabras[2]
@@ -306,58 +248,31 @@ func separaPalabras(entrada string) []string {
     return usuarios, mensaje
   }
 
-
-	func identificaDestinatario(bandera string, entrada string, conexionActual net.Conn) ([]Usuario, string) {
-  	var destinatarios []Usuario
-    var sala string
-    var mensaje string
-  	switch bandera {
-  	case "MESSAGE":
-      destinatarios, mensaje = capturaMensaje(entrada)
-  		return destinatarios, mensaje
-  	case "PUBLICMESSAGE":
-      destinatarios, mensaje = capturaMensajePublico(entrada)
-  		return destinatarios, mensaje
-  	case "INVITE":
-      sala, destinatarios = invitaUsuarios(entrada)
-			break
-		case "JOINROOM":
-      aceptarSolicitud(entrada)
-  		break
-  	case "ROOMESSAGE":
-      destinatarios, mensaje = mensajeSala(entrada)
-  		break
-  	default :
-  		return nil,""
-   	}
-  		return  destinatarios, mensaje
-  	}
-
-  func identificaBandera(conexion net.Conn, mensaje string) (string,string) {
+  func identificaBandera(conexion net.Conn, mensaje string) (string) {
     usuario := BuscaUsuarioPorConexion(conexion)
     if usuario.nombre == "default" {
-      return "USUARIO_NO_IDENTIFICADO", ""
+      return "USUARIO_NO_IDENTIFICADO"
     }
   	if strings.Contains(mensaje, "IDENTIFY") {
-  		return "IDENTIFY", "SOLICITUD"
+  		return "IDENTIFY"
   	} else if strings.Contains(mensaje, "STATUS") {
-  		return "STATUS", "SOLICITUD"
+  		return "STATUS"
   	} else if strings.Contains(mensaje, "USERS") {
-  		return "USERS", "SOLICITUD"
+  		return "USERS"
   	} else if strings.Contains(mensaje, "MESSAGE") {
-  		return "MESSAGE", "ENVIO"
+  		return "MESSAGE"
   	} else if strings.Contains(mensaje, "PUBLICMESSAGE"){
-  		return "PUBLICMESSAGE", "ENVIO"
+  		return "PUBLICMESSAGE"
   	} else if strings.Contains(mensaje, "CREATEROOM"){
-  		return "CREATEROOM", "SOLICITUD"
+  		return "CREATEROOM"
   	} else if strings.Contains(mensaje, "INVITE"){
-  		return "INVITE", "ENVIO"
+  		return "INVITE"
 		} else if strings.Contains(mensaje, "JOINROOM") {
-			return "JOINROOM", "ENVIO"
+			return "JOINROOM"
 		} else if strings.Contains(mensaje, "ROOMESSAGE") {
-  		return "ROOMESSAGE", "ENVIO"
+  		return "ROOMESSAGE"
   	} else if strings.Contains(mensaje, "DISCONNECT") {
-  		return "DISCONNECT", "SOLICITUD"
+  		return "DISCONNECT"
   	}
-  	return "SIN_BANDERA", ""
+  	return "SIN_BANDERA"
   }

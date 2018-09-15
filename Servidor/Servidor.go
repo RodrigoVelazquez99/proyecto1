@@ -11,7 +11,6 @@
 	)
 
 	func main() {
-
 		if len(os.Args) != 3 {
 			fmt.Println("No agregaste correctamente los datos de la direccion y puerto")
 			os.Exit(1)
@@ -26,7 +25,6 @@
 			revisaError(disponible)
 			go manejaCliente(conexion)
 		}
-
 	}
 
 	func revisaError(err error) {
@@ -38,36 +36,55 @@
 
 	func manejaCliente(conexion net.Conn) {
 		defer conexion.Close()
-		mensaje := make([]byte,256)
+		entrada := make([]byte,256)
 		var tmp []byte
 		for {
 			for {
-				cadena, err := conexion.Read(mensaje)
+				cadena, err := conexion.Read(entrada)
 				if err != nil{
 					if err == io.EOF {
 						break
 					}
 				}
-				mensaje = bytes.Trim(mensaje[:cadena], "\x00")
-				tmp = append(tmp, mensaje...)
+				entrada = bytes.Trim(entrada[:cadena], "\x00")
+				tmp = append(tmp, entrada...)
 				if tmp[len(tmp) - 1 ] == 10 {
 					break
 				}
 			}
-			bandera, tipo, destinatarios, texto := Usuario.opcionesMensaje(tmp, conexion)
-			if bandera == "SIN_BANDERA" {
-				conexion.Write(byte[]("Ingresa un comando valido \n "))
-			} else if bandera == "USUARIO_NO_IDENTIFICADO" {
-				conexion.Write(byte[]("Usuario no identificado, identificate \n"))
-			} else {
-				if tipo == "SOLICITUD" {
-					respuesta := Usuario.manejaSolicitud(bandera, conexion, tmp)
-					enviaMensaje([]byte(respuesta),)
-				} else {
-					enviaMensaje([]byte(texto), conexion, destinatarios)
+			bandera := Usuario.identificaBandera(conexion, tmp)
+			mensaje := string(tmp)
+				switch bandera {
+				case  "SIN_BANDERA":
+					conexion.Write(byte[]("Ingresa un comando valido \n "))
+				case  "USUARIO_NO_IDENTIFICADO":
+					conexion.Write(byte[]("Usuario no identificado, identificate \n"))
+				case "IDENTIFY":
+					destinatarios, salida := Usuario.IdentificaUsuario()
+				case "STATUS":
+					destinatarios, salida := Usuario.CapturaEstado(mensaje, conexion)
+				case "USERS":
+					salida := Usuario.DevuelveUsuarios()
+				case "MESSAGE":
+					destinatarios, salida := Usuario.CapturaMensaje(mensaje)
+				case "PUBLICMESSAGE":
+					destinatarios, salida := Usuario.CapturaMensajePublico(mensaje)
+				case "CREATEROOM":
+					Usuario.NuevaSala(mensaje, conexion)
+			  case "INVITE":
+					destinatarios, salida := Usuario.InvitaUsuarios(mensaje)
+				case "JOINROOM":
+					Usuario.AceptarSolicitud(mensaje)
+				case "ROOMESSAGE":
+					destinatarios, salida := Usuario.MensajeSala(mensaje)
+				case "DISCONNECT":
+					destinatarios, salida := Usuario.Desconecta(conexion)
+					conexion.Close()
 				}
+				go enviaMensaje([]byte(mensaje), conexion, destinatarios)
+				tmp = make([]byte, 0)
 			}
-			tmp = make([]byte, 0)
+
 		}
 	}
 
