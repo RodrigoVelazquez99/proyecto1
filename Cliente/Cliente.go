@@ -5,7 +5,7 @@
 		"fmt"
 		"net"
 		"os"
-		"bytes"
+		//"bytes"
 		"io"
 	)
 
@@ -42,7 +42,7 @@
 	}
 
 	func recibeMensajes(conexion net.Conn) {
-		var mensaje []byte
+		/*var mensaje []byte
 		buffer := make([]byte, 256)
 		for  {
 			for {
@@ -60,6 +60,15 @@
 			}
 			fmt.Printf("%s\n",mensaje[:len(mensaje)-1])
 			mensaje = make([]byte, 0)
+		}*/
+		for {
+    mensaje, err := bufio.NewReader(conexion).ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+		}
+		fmt.Print(mensaje + "\n")
 		}
 	}
 

@@ -21,6 +21,7 @@
 		for {
 			conexion, disponible := servidor.Accept()
 			revisaError(disponible)
+			//fmt.Println(Usuario.ObtenerUsuarios())
 			go manejaCliente(conexion)
 		}
 	}
@@ -68,10 +69,10 @@
 				case "IDENTIFY":
 					nombre := Usuario.ObtenerNombre(conexion)
 					if nombre != "SIN_IDENTIFICAR" {
-							conexion.Write([]byte("Ya existe un usuario identificado con ese nombre \n"))
+							conexion.Write([]byte("Ya estas identificado \n"))
 							tmp = make([]byte, 0)
 							continue
-					} else{
+					} else {
 						tipo = "NOTIFICACION"
 						destinatarios, salida = Usuario.IdentificaUsuario(mensaje, conexion)
 					}
@@ -83,10 +84,10 @@
 					destinatarios, salida = Usuario.DevuelveUsuarios(conexion)
 				case "MESSAGE":
 					tipo = "MENSAJE"
-					sala, destinatarios, salida = Usuario.CapturaMensaje(mensaje)
+					sala, destinatarios, salida = Usuario.CapturaMensaje(conexion, mensaje)
 				case "PUBLICMESSAGE":
 					tipo = "MENSAJE"
-					sala, destinatarios, salida = Usuario.CapturaMensajePublico(mensaje)
+					sala, destinatarios, salida = Usuario.CapturaMensajePublico(conexion, mensaje)
 				case "CREATEROOM":
 					tipo = "NOTIFICACION"
 					destinatarios, salida = Usuario.NuevaSala(mensaje, conexion)
@@ -103,9 +104,14 @@
 					var permisos map[string]net.Conn
 					tipo = "NOTIFICACION"
 					destinatarios, permisos, salida = Usuario.Desconecta(conexion)
-				  go enviaRespuesta(sala, conexion, tipo, salida, destinatarios)
+					if destinatarios == nil {
+						tmp = make([]byte, 0)
+						conexion.Close()
+						continue
+					}
+				  enviaRespuesta(sala, conexion, tipo, salida, destinatarios)
 					enviaNuevosPermisos(permisos)
-					conexion.Close()
+					break
 				}
 				go enviaRespuesta(sala, conexion, tipo, salida, destinatarios)
 				tmp = make([]byte, 0)
@@ -116,11 +122,19 @@
 		var cadena string
 		nombre := Usuario.ObtenerNombre(conexionActual)
 		for _, conexion := range destinatarios {
+				if conexion == nil {
+					continue
+				}
 					if tipo == "NOTIFICACION"{
 						conexion.Write([]byte(mensaje + "\n"))
 					} else {
+						if sala == "[SERVIDOR]" {
+							cadena = sala +": " + mensaje + "\n"
+							conexion.Write([]byte(cadena))
+						} else {
 						cadena = sala + " - " + nombre + ": " + mensaje + "\n"
 						conexion.Write([]byte(cadena))
+						}
 					}
 		}
 	}
