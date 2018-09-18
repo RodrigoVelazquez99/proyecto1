@@ -5,9 +5,9 @@
 		"fmt"
 		"net"
 		"os"
-		"strings"
+		"bytes"
+		"io"
 	)
-
 
 	func main() {
 
@@ -32,32 +32,34 @@
 
 	func enviaMensajes(conexion net.Conn){
 		for {
-			/*for  online {
-				conexion.Write([]byte(nombre + " se ha conectado" + "\n"))
-				online = false
-			}*/
-			//fmt.Print(nombre + ">")
 			lector := bufio.NewReader(os.Stdin)
 			mensaje, err := lector.ReadString('\n')
-			if strings.Contains(mensaje, "DISCONNECT") {
-				//fmt.Fprintf(conexion, nombre + " se ha desconectado " + "\n")
-				break
-			}
 			if err != nil {
 				break
 			}
-			//fmt.Fprintf(conexion, mensaje)
 			conexion.Write([]byte(mensaje))
 		}
 	}
 
 	func recibeMensajes(conexion net.Conn) {
-		for {
-			informacionDevuelta, err := bufio.NewReader(conexion).ReadString('\n')
-			if err != nil {
-				break
+		var mensaje []byte
+		buffer := make([]byte, 256)
+		for  {
+			for {
+				cadena, err := conexion.Read(buffer)
+				if err != nil {
+					if err == io.EOF {
+						break
+					}
+				}
+				buffer = bytes.Trim(buffer[:cadena], "\x00")
+				mensaje = append(mensaje, buffer...)
+				if mensaje[len(mensaje)-1] == 10 {
+					break
+				}
 			}
-			fmt.Print(string(informacionDevuelta))
+			fmt.Printf("%s\n",mensaje[:len(mensaje)-1])
+			mensaje = make([]byte, 0)
 		}
 	}
 

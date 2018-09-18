@@ -52,6 +52,7 @@
 			}
 			bandera := Usuario.IdentificaBandera(conexion, tmp)
 			mensaje := string(tmp)
+			var sala string
 			var destinatarios []net.Conn
 			var salida string
 			var tipo string
@@ -60,13 +61,13 @@
 					conexion.Write([]byte("Ingresa un comando valido \n "))
 					tmp = make([]byte, 0)
 					continue
-				case  "USUARIO_NO_IDENTIFICADO":
+				case  "SIN_IDENTIFICAR":
 					conexion.Write([]byte("Usuario no identificado, identificate \n"))
 					tmp = make([]byte, 0)
 					continue
 				case "IDENTIFY":
-					usuario := Usuario.ObtenerNombre(conexion)
-					if usuario != "DEFAULT" {
+					nombre := Usuario.ObtenerNombre(conexion)
+					if nombre != "SIN_IDENTIFICAR" {
 							conexion.Write([]byte("Ya existe un usuario identificado con ese nombre \n"))
 							tmp = make([]byte, 0)
 							continue
@@ -82,15 +83,13 @@
 					destinatarios, salida = Usuario.DevuelveUsuarios(conexion)
 				case "MESSAGE":
 					tipo = "MENSAJE"
-					destinatarios, salida = Usuario.CapturaMensaje(mensaje)
+					sala, destinatarios, salida = Usuario.CapturaMensaje(mensaje)
 				case "PUBLICMESSAGE":
 					tipo = "MENSAJE"
-					destinatarios, salida = Usuario.CapturaMensajePublico(mensaje)
+					sala, destinatarios, salida = Usuario.CapturaMensajePublico(mensaje)
 				case "CREATEROOM":
 					tipo = "NOTIFICACION"
 					destinatarios, salida = Usuario.NuevaSala(mensaje, conexion)
-					tmp = make([]byte, 0)
-					continue
 			  case "INVITE":
 					tipo = "NOTIFICACION"
 					destinatarios, salida = Usuario.InvitaUsuarios(conexion, mensaje)
@@ -99,29 +98,35 @@
 					destinatarios, salida = Usuario.AceptarSolicitud(conexion, mensaje)
 				case "ROOMESSAGE":
 					tipo = "MENSAJE"
-					destinatarios, salida = Usuario.MensajeSala(mensaje)
+					sala, destinatarios, salida = Usuario.MensajeSala(conexion, mensaje)
 				case "DISCONNECT":
+					var permisos map[string]net.Conn
 					tipo = "NOTIFICACION"
-					destinatarios, salida = Usuario.Desconecta(conexion)
-				}
-				go enviaRespuesta(tipo,salida, destinatarios)
-				if bandera == "DISCONNECT"{
+					destinatarios, permisos, salida = Usuario.Desconecta(conexion)
+				  go enviaRespuesta(sala, conexion, tipo, salida, destinatarios)
+					enviaNuevosPermisos(permisos)
 					conexion.Close()
 				}
+				go enviaRespuesta(sala, conexion, tipo, salida, destinatarios)
 				tmp = make([]byte, 0)
 			}
 	}
 
-	func enviaRespuesta(tipo string, mensaje string, destinatarios []net.Conn){
+	func enviaRespuesta(sala string, conexionActual net.Conn, tipo string, mensaje string, destinatarios []net.Conn){
 		var cadena string
-		var nombre string
+		nombre := Usuario.ObtenerNombre(conexionActual)
 		for _, conexion := range destinatarios {
-					nombre = Usuario.ObtenerNombre(conexion)
 					if tipo == "NOTIFICACION"{
-						conexion.Write([]byte(mensaje))
+						conexion.Write([]byte(mensaje + "\n"))
 					} else {
-						cadena = nombre + ": " + mensaje + "\n"
+						cadena = sala + " - " + nombre + ": " + mensaje + "\n"
 						conexion.Write([]byte(cadena))
 					}
-				}
+		}
+	}
+
+	func enviaNuevosPermisos(nuevosPermisos map[string]net.Conn)  {
+		for mensaje,conexion := range nuevosPermisos {
+			conexion.Write([]byte(mensaje))
+		}
 	}
