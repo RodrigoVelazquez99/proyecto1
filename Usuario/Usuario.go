@@ -18,14 +18,13 @@
   var Usuarios []Usuario
 
   func InicializaUsuarios() {
-    Clientes := make([]Usuario, 0)
-    Usuarios = Clientes
+    Usuarios = make([]Usuario, 0)
   }
 
   func ObtenerListaUsuarios() string {
-    lista := "Usuarios conectados:      " + "\n"
+    lista := "[SERVIDOR] Usuarios conectados: "
       for i:= 0 ;i < len(Usuarios) ; i++ {
-          lista += Usuarios[i].estado + " " + Usuarios[i].nombre + "\n"
+          lista += Usuarios[i].nombre + " "
       }
     return lista
   }
@@ -38,15 +37,6 @@
       }
     }
     return conexiones
-  }
-
-  func UsuarioIdentificado(conexion net.Conn) bool {
-      for _,usuario := range Usuarios {
-        if usuario.conexion == conexion {
-          return true
-        }
-      }
-    return false
   }
 
   func ObtenerNombre(conexion net.Conn) string {
@@ -67,13 +57,35 @@
     return nil
   }
 
-  func obtenerPermisoDeSala(usuario Usuario, sala string) string {
+  func obtenerPermisoDeSala(usuario Usuario, salaRequerida string) string {
     for sala,permiso := range usuario.salas {
-      if sala == sala {
+      if sala == salaRequerida {
         return permiso
       }
     }
     return "NO_EXISTE_LA_SALA"
+  }
+
+  func obtenerMiembrosSala(salaRequerida string) []net.Conn {
+    destinatarios := make([]net.Conn, 0)
+    for _, usuario := range Usuarios {
+      for sala,_ := range usuario.salas {
+        conexion := usuario.conexion
+        if sala == salaRequerida {
+          destinatarios = append(destinatarios, conexion)
+        }
+      }
+    }
+    return destinatarios
+  }
+
+  func UsuarioIdentificado(conexion net.Conn) bool {
+    for _,usuario := range Usuarios {
+      if usuario.conexion == conexion {
+        return true
+      }
+    }
+    return false
   }
 
   func BuscaUsuarioPorNombre(nombreActual string) Usuario{
@@ -110,27 +122,34 @@
     Usuarios = append(Usuarios, nuevoUsuario)
 	}
 
+  func limpiaListaUsuarios()  {
+    nuevaLista := make([]Usuario, 0)
+    Usuarios = nuevaLista
+  }
 
   func eliminaUsuario(usuario Usuario){
-      for i := 0 ; i < len(Usuarios) ; i++ {
-        if len(Usuarios) == 1 {
-          nuevosUsuarios := make([]Usuario, 0)
-          Usuarios = nuevosUsuarios
-          break
-        }
+    if len(Usuarios) == 1 {
+      limpiaListaUsuarios()
+      return
+    }
+    for i := 0 ; i < len(Usuarios) ; i++ {
+      if Usuarios[i].nombre == usuario.nombre {
+        Usuarios[i] = Usuarios[len(Usuarios) - 1]
+        Usuarios = Usuarios[:len(Usuarios)-1]
+        break
+      }
+    }
+  }
+
+  func registraUsuarioSala(usuario Usuario, salaRequerida string)  {
+      for i := 0; i < len(Usuarios); i++ {
         if Usuarios[i].nombre == usuario.nombre {
-          Usuarios[i] = Usuarios[len(Usuarios) - 1]
-          Usuarios = Usuarios[:len(Usuarios)-1]
+          salasInscrito := Usuarios[i].salas
+          salasInscrito[salaRequerida] = "MIEMBRO"
+          Usuarios[i].salas = salasInscrito
           break
         }
       }
-  }
-
-  func creaSala(conexion net.Conn, sala string)  {
-    admin := BuscaUsuarioPorConexion(conexion)
-    nuevaSala := admin.salas
-    nuevaSala[sala] = "ADMIN"
-    admin.salas = nuevaSala
   }
 
   func salaRegistrada(salaRequerida string) bool {
@@ -144,28 +163,24 @@
     return false
   }
 
-  func getSala(salaRequerida string) []net.Conn {
-    destinatarios := make([]net.Conn, 0)
-    for _, usuario := range Usuarios {
-      for sala,_ := range usuario.salas {
-        conexion := usuario.conexion
-        if sala == salaRequerida {
-          destinatarios = append(destinatarios, conexion)
-        }
+  func cambiaEstado(conexionActual net.Conn, estado string)  {
+    for  i:= 0; i < len(Usuarios) ; i++ {
+      if Usuarios[i].conexion == conexionActual {
+        Usuarios[i].estado = estado
+        break
       }
     }
-    return destinatarios
-  }
-
-  func cambiaEstado(conexion net.Conn, estado string)  {
-    usuario := BuscaUsuarioPorConexion(conexion)
-    usuario.estado = estado
   }
 
   func cambiaPermiso(sala string, usuario Usuario, permiso string)  {
-    nuevaSala := usuario.salas
-    nuevaSala[sala] = permiso
-    usuario.salas = nuevaSala
+    for i := 0;  i < len(Usuarios) ; i++ {
+      if Usuarios[i].nombre == usuario.nombre  {
+        nuevoPermiso := Usuarios[i].salas
+        nuevoPermiso[sala] = permiso
+        Usuarios[i].salas = nuevoPermiso
+        break
+      }
+    }
   }
 
   func IdentificaUsuario(entrada string, conexion net.Conn) ([]net.Conn, string)  {
@@ -173,38 +188,12 @@
     if len(palabras) <= 1 {
       destinatario := make([]net.Conn, 0)
       destinatario = append(destinatario, conexion)
-      return destinatario, "No agregaste el nombre de usuario"
+      return destinatario, "[SERVIDOR] No agregaste el nombre de usuario"
     }
     nombre := string(palabras[1])
     RegistraUsuarioNuevo(conexion,nombre,"SALA_GLOBAL")
-    destinatarios := getSala("SALA_GLOBAL")
-    mensaje := nombre + " se ha conectado" + "\n"
-    return destinatarios, mensaje
-  }
-
-  func CapturaEstado(entrada string, conexion net.Conn) ([]net.Conn, string) {
-    usuario := BuscaUsuarioPorConexion(conexion)
-    destinatarios := getSala("SALA_GLOBAL")
-    palabras := separaPalabras(entrada)
-    if len(palabras) <= 1 {
-      destinatario := make([]net.Conn, 0)
-      destinatario = append(destinatario, conexion)
-      return destinatario, "No ingresaste el estado"
-    }
-    switch palabras[1] {
-    case "ACTIVE":
-      cambiaEstado(conexion, "ACTIVE")
-    case "BUSY":
-      cambiaEstado(conexion, "BUSY")
-    case "FAR":
-      cambiaEstado(conexion, "FAR")
-    default:
-      destinatario := make([]net.Conn, 0)
-      destinatario = append(destinatario, conexion)
-      mensaje := palabras[1] + " no es un estado valido"
-      return destinatario, mensaje
-    }
-    mensaje := "[SERVIDOR] " + usuario.nombre  + " ha cambiado su estado a: " + palabras[1] + "\n"
+    destinatarios := obtenerMiembrosSala("SALA_GLOBAL")
+    mensaje := "[SERVIDOR] " + nombre + " se ha conectado" + "\n"
     return destinatarios, mensaje
   }
 
@@ -216,73 +205,59 @@
   }
 
   func NuevaSala(entrada string, conexion net.Conn) ([]net.Conn, string) {
-    palabras := separaPalabras(entrada)
-    sala := palabras[1]
-    creaSala(conexion, sala)
-    mensaje := "Nueva sala: " + sala + "\n"
     destinatario := make([]net.Conn, 0)
     destinatario = append(destinatario, conexion)
+    palabras := separaPalabras(entrada)
+    if len(palabras) == 1 {
+      return destinatario, "[SERVIDOR] No ingresaste el nombre de la sala"
+    }
+    nuevaSala := palabras[1]
+    if salaRegistrada(nuevaSala) {
+      return destinatario, "[SERVIDOR] Ya existe una sala con ese nombre, elige otro"
+    }
+    for i := 0; i < len(Usuarios) ; i++ {
+      if Usuarios[i].conexion == conexion {
+        salas := Usuarios[i].salas
+        salas[nuevaSala] = "ADMIN"
+        Usuarios[i].salas = salas
+        break
+      }
+    }
+    mensaje := "[SERVIDOR] Nueva sala: " + nuevaSala + "\n"
     return destinatario, mensaje
   }
-
 
   func Desconecta(conexion net.Conn) ([]net.Conn, map[string]net.Conn, string) {
     eliminado := BuscaUsuarioPorConexion(conexion)
     nombre := eliminado.nombre
     cambiosPermisos := cambiaPermisos(eliminado)
     eliminaUsuario(eliminado)
-    if len(Usuarios) == 0 {
-      return nil,nil,""
-    }
     destinatarios := ObtenerConexiones()
-    mensaje := "Se ha desconectado " + nombre + "\n"
+    mensaje := "[SERVIDOR] Se ha desconectado " + nombre + "\n"
     return destinatarios, cambiosPermisos, mensaje
   }
 
-  func pop(arr []string) string {
-    if len(arr) == 1 {
-      return string(arr[0])
-    }
-    eliminado := arr[0]
-    arr[0] = arr[len(arr) - 1 ]
-    arr = arr[:len(arr) -1 ]
-    return string(eliminado)
-  }
-
   func cambiaPermisos(eliminado Usuario) map[string]net.Conn {
-    var destinatarios map[string]net.Conn
+    var mensaje string
+    destinatarios := make(map[string]net.Conn, 0)
     salasAdmin := obtenerSalasDeUsuarioAdmin(eliminado)
-    if salasAdmin != nil {
-      destinatarios = make(map[string]net.Conn)
+    if salasAdmin != nil{
       j := 0
-      for i := len(salasAdmin) - 1; i >= 0 ; i-- {
-          if len(salasAdmin) == 1 {
-            for j < len(Usuarios) {
-              salaEliminado := pop(salasAdmin)
-              if compartenSala(salaEliminado, Usuarios[j]) {
-                cambiaPermiso(salaEliminado,Usuarios[j],"ADMIN")
-                mensaje := "Has cambiado a permiso de administrador de la sala de chat: " + salaEliminado + "\n"
-                destinatarios[mensaje] = Usuarios[i].conexion
-                break
-              } else {
-                j++
-              }
-            }
-          }
-          salaEliminado := pop(salasAdmin)
-          if compartenSala(salaEliminado, Usuarios[j]) {
-            cambiaPermiso(salaEliminado,Usuarios[j],"ADMIN")
-            mensaje := "Has cambiado a permiso de administrador de la sala de chat: " + salaEliminado + "\n"
+      for i := 0; i < len(Usuarios); i++ {
+        if Usuarios[i].nombre != eliminado.nombre {
+          if j < len(salasAdmin) && perteneceSala(salasAdmin[j], Usuarios[i]) {
+            cambiaPermiso(salasAdmin[j], Usuarios[i],"ADMIN")
+            mensaje = "[SERVIDOR] Has cambiado a permiso de administrador de la sala de chat: " + salasAdmin[j]
             destinatarios[mensaje] = Usuarios[i].conexion
-          } else {
             j++
           }
+        }
       }
     }
     return destinatarios
   }
 
-  func compartenSala(salaRequerida string, usuario Usuario) bool {
+  func perteneceSala(salaRequerida string, usuario Usuario) bool {
     for sala,_ := range usuario.salas {
           if sala == salaRequerida {
             return true
@@ -314,18 +289,43 @@
     return linea
   }
 
+  func CapturaEstado(entrada string, conexion net.Conn) ([]net.Conn, string) {
+    usuario := BuscaUsuarioPorConexion(conexion)
+    destinatarios := obtenerMiembrosSala("SALA_GLOBAL")
+    palabras := separaPalabras(entrada)
+    if len(palabras) <= 1 {
+      destinatario := make([]net.Conn, 0)
+      destinatario = append(destinatario, conexion)
+      return destinatario, "[SERVIDOR] No ingresaste el estado"
+    }
+    switch palabras[1] {
+    case "ACTIVE":
+      cambiaEstado(conexion, "ACTIVE")
+    case "BUSY":
+      cambiaEstado(conexion, "BUSY")
+    case "FAR":
+      cambiaEstado(conexion, "FAR")
+    default:
+      destinatario := make([]net.Conn, 0)
+      destinatario = append(destinatario, conexion)
+      mensaje := "[SERVIDOR] " + palabras[1] + " no es un estado valido"
+      return destinatario, mensaje
+    }
+    mensaje := "[SERVIDOR] " + usuario.nombre  + " ha cambiado su estado a: " + palabras[1] + "\n"
+    return destinatarios, mensaje
+  }
 
   func CapturaMensaje(conexion net.Conn, entrada string) (string,[]net.Conn, string) {
     destinatarios := make([]net.Conn, 0)
     palabras := separaPalabras(entrada)
     if len(palabras) < 3  {
       destinatarios = append(destinatarios, conexion)
-      return "[SERVIDOR]", destinatarios, "No agregaste los campos requeridos"
+      return "", destinatarios, "[SERVIDOR] No agregaste los campos requeridos"
     }
     destinatario := BuscaUsuarioPorNombre(palabras[1])
     if destinatario.nombre == "SIN_IDENTIFICAR" {
       destinatarios = append(destinatarios, conexion)
-      return "[SERVIDOR]", destinatarios, "No esta identificado: " + palabras[1]
+      return "", destinatarios, " [SERVIDOR] No esta identificado: " + palabras[1]
     }
     mensaje := juntaPalabras(palabras, 2)
     destinatarios = append(destinatarios, destinatario.conexion)
@@ -334,7 +334,7 @@
 
   func CapturaMensajePublico(conexion net.Conn, entrada string) (string, []net.Conn, string) {
     destinatarios := make([]net.Conn, 0)
-    if len(Usuarios) == 0 {
+    if len(Usuarios) == 1 {
       destinatarios = append(destinatarios, conexion)
     } else {
       destinatarios = ObtenerConexiones()
@@ -345,68 +345,105 @@
   }
 
   func InvitaUsuarios(conexion net.Conn, entrada string) ([]net.Conn, string) {
+    destinatarios := make([]net.Conn, 0)
     receptor := BuscaUsuarioPorConexion(conexion)
     palabras := separaPalabras(entrada)
+    if len(palabras) == 1 {
+      destinatarios = append(destinatarios, conexion)
+      return destinatarios, "[SERVIDOR] Escribe la sala de chat"
+    }
     sala := palabras[1]
+    if !salaRegistrada(sala) {
+      destinatarios = append(destinatarios, conexion)
+      return destinatarios, "[SERVIDOR] La sala no existe"
+    }
     permiso := obtenerPermisoDeSala(receptor, sala)
-    destinatarios := make([]net.Conn, 0)
     if permiso != "ADMIN" {
       destinatarios = append(destinatarios, conexion)
-      mensaje := "No tienes permiso para invitar usuarios" + "\n"
-      return destinatarios, mensaje
+      return destinatarios, "[SERVIDOR] No tienes permiso para invitar usuarios" + "\n"
     }
-    for i := 2; i < len(palabras); i++ {
+    for i := 2 ; i < len(palabras) ; i++ {
       usuario := BuscaUsuarioPorNombre(palabras[i])
-      solicitudes := usuario.solicitudes
-      solicitudes = append(solicitudes, sala)
-      usuario.solicitudes = solicitudes
+      if usuario.nombre == "SIN_IDENTIFICAR" {
+        continue
+      }
+      enviaSolicitud(usuario, sala)
       destinatarios = append(destinatarios, usuario.conexion)
     }
-    mensaje := "Invitacion para unirse a la sala: " + sala + "\n"
+    mensaje := "[SERVIDOR] " + receptor.nombre + " te ha invitado a unirse a la sala: " + sala + "\n"
     return destinatarios, mensaje
+  }
+
+  func enviaSolicitud(usuario Usuario, solicitud string) {
+    for i := 0 ; i < len(Usuarios) ; i++{
+      if Usuarios[i].nombre == usuario.nombre {
+        nuevaSolicitud := Usuarios[i].solicitudes
+        nuevaSolicitud = append(nuevaSolicitud, solicitud)
+        Usuarios[i].solicitudes = nuevaSolicitud
+        break
+      }
+    }
   }
 
   func AceptarSolicitud(conexion net.Conn, entrada string) ([]net.Conn, string) {
     var mensaje string
-    usuario := BuscaUsuarioPorConexion(conexion)
     destinatarios := make([]net.Conn, 0)
+    usuario := BuscaUsuarioPorConexion(conexion)
     invitado := false
     palabras := separaPalabras(entrada)
+    if len(palabras) == 1 {
+      destinatarios = append(destinatarios, conexion)
+      return destinatarios, "[SERVIDOR] Ingresa el nombre de la sala"
+    }
     sala := palabras[1]
+    if !salaRegistrada(sala) {
+      destinatarios = append(destinatarios, conexion)
+      return destinatarios, "[SERVIDOR] La sala no existe"
+    }
     for _,solicitud := range usuario.solicitudes {
         if solicitud == sala {
           invitado = true
+          break
         }
     }
     if !invitado {
       destinatarios = append(destinatarios, conexion)
-      mensaje = "No tienes solicitud para unirte a la sala" + "\n"
+      mensaje = "[SERVIDOR] No tienes solicitud para unirte a la sala" + "\n"
       return destinatarios, mensaje
     }
-    mensaje = usuario.nombre + " ha ingresado a la sala" + "\n"
-    destinatarios = getSala(sala)
+    registraUsuarioSala(usuario, sala)
+    mensaje = "[SERVIDOR] " + usuario.nombre + " ha ingresado a la sala: " + sala  + "\n"
+    destinatarios = obtenerMiembrosSala(sala)
     return destinatarios, mensaje
   }
 
   func MensajeSala(conexion net.Conn, entrada string) (string, []net.Conn, string) {
+    destinatarios := make([]net.Conn, 0)
     palabras := separaPalabras(entrada)
-    sala := palabras[1]
+    if len(palabras) == 1 {
+      destinatarios = append(destinatarios, conexion)
+      return "", destinatarios, "[SERVIDOR] No ingresaste el nombre de la sala"
+    }
+    salaDestino := palabras[1]
+    if !salaRegistrada(salaDestino) {
+      destinatarios = append(destinatarios, conexion)
+      return "", destinatarios, "[SERVIDOR] La sala no existe"
+    }
     mensaje := juntaPalabras(palabras, 2)
     usuario := BuscaUsuarioPorConexion(conexion)
     esMiembro := false
     for sala,_ := range usuario.salas {
-      if sala == sala {
+      if sala == salaDestino {
         esMiembro = true
       }
     }
     if !esMiembro {
-      mensaje := "No eres miembro de la sala de chat" + "\n"
-      destinatarios := make([]net.Conn, 0)
+      mensaje := "[SERVIDOR] No eres miembro de la sala de chat" + "\n"
       destinatarios = append(destinatarios, conexion)
       return "", destinatarios, mensaje
     }
-    destinatarios := getSala(sala)
-    return sala, destinatarios, mensaje
+    destinatarios = obtenerMiembrosSala(salaDestino)
+    return salaDestino, destinatarios, mensaje
   }
 
   func IdentificaBandera(conexion net.Conn, entrada []byte) (string) {
@@ -424,11 +461,14 @@
     if strings.Contains(mensaje, "USERS") {
   		return "USERS"
   	}
-    if strings.Contains(mensaje, "MESSAGE") {
-  		return "MESSAGE"
-  	}
     if strings.Contains(mensaje, "PUBLICMESSAGE") {
   		return "PUBLICMESSAGE"
+  	}
+    if strings.Contains(mensaje, "ROOMESSAGE") {
+      return "ROOMESSAGE"
+    }
+    if strings.Contains(mensaje, "MESSAGE") {
+  		return "MESSAGE"
   	}
     if strings.Contains(mensaje, "CREATEROOM") {
   		return "CREATEROOM"
@@ -439,9 +479,6 @@
     if strings.Contains(mensaje, "JOINROOM") {
 			return "JOINROOM"
 		}
-    if strings.Contains(mensaje, "ROOMESSAGE") {
-  		return "ROOMESSAGE"
-  	}
     if strings.Contains(mensaje, "DISCONNECT") {
   		return "DISCONNECT"
   	}

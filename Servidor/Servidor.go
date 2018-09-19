@@ -21,7 +21,6 @@
 		for {
 			conexion, disponible := servidor.Accept()
 			revisaError(disponible)
-			//fmt.Println(Usuario.ObtenerUsuarios())
 			go manejaCliente(conexion)
 		}
 	}
@@ -59,17 +58,17 @@
 			var tipo string
 				switch bandera {
 				case  "SIN_BANDERA":
-					conexion.Write([]byte("Ingresa un comando valido \n "))
+					conexion.Write([]byte("[SERVIDOR] Ingresa un comando valido \n "))
 					tmp = make([]byte, 0)
 					continue
 				case  "SIN_IDENTIFICAR":
-					conexion.Write([]byte("Usuario no identificado, identificate \n"))
+					conexion.Write([]byte("[SERVIDOR] Usuario no identificado, identificate \n"))
 					tmp = make([]byte, 0)
 					continue
 				case "IDENTIFY":
 					nombre := Usuario.ObtenerNombre(conexion)
 					if nombre != "SIN_IDENTIFICAR" {
-							conexion.Write([]byte("Ya estas identificado \n"))
+							conexion.Write([]byte("[SERVIDOR] Ya estas identificado \n"))
 							tmp = make([]byte, 0)
 							continue
 					} else {
@@ -109,7 +108,7 @@
 						conexion.Close()
 						continue
 					}
-				  enviaRespuesta(sala, conexion, tipo, salida, destinatarios)
+				  go enviaRespuesta(sala, conexion, tipo, salida, destinatarios)
 					enviaNuevosPermisos(permisos)
 					break
 				}
@@ -128,9 +127,8 @@
 					if tipo == "NOTIFICACION"{
 						conexion.Write([]byte(mensaje + "\n"))
 					} else {
-						if sala == "[SERVIDOR]" {
-							cadena = sala +": " + mensaje + "\n"
-							conexion.Write([]byte(cadena))
+						if sala == "" {
+						conexion.Write([]byte(mensaje + "\n"))
 						} else {
 						cadena = sala + " - " + nombre + ": " + mensaje + "\n"
 						conexion.Write([]byte(cadena))
@@ -141,6 +139,6 @@
 
 	func enviaNuevosPermisos(nuevosPermisos map[string]net.Conn)  {
 		for mensaje,conexion := range nuevosPermisos {
-			conexion.Write([]byte(mensaje))
+			conexion.Write([]byte(mensaje + "\n"))
 		}
 	}
