@@ -9,6 +9,11 @@
 		"github.com/RodrigoVelazquez99/proyecto1/Usuario"
 	)
 
+	/**
+	* Modelado y programacion - Proyecto 1: Chat
+	*	Velázquez Cruz Rodrigo Fernando
+	*/
+
 	func main() {
 		if len(os.Args) != 3 {
 			fmt.Println("No agregaste correctamente los datos de la direccion IP y puerto")
@@ -16,6 +21,8 @@
 		}
 		fmt.Println("  Iniciando el servidor .....  ")
 		servidor, err := net.Listen("tcp", os.Args[1] + ":" + os.Args[2])
+        fmt.Println("Conectado en: " + os.Args[1])
+        fmt.Println("Puerto: " + os.Args[2])
 	 	revisaError(err)
 		Usuario.InicializaUsuarios()
 		for {
@@ -32,6 +39,7 @@
 		}
 	}
 
+	/* Recibe los mensajes de los clientes e identifica las palabras clave */
 	func manejaCliente(conexion net.Conn) {
 		defer conexion.Close()
 		entrada := make([]byte,256)
@@ -117,6 +125,7 @@
 			}
 	}
 
+	/* Envia el mensaje a los destinatarios */
 	func enviaRespuesta(sala string, conexionActual net.Conn, tipo string, mensaje string, destinatarios []net.Conn){
 		var cadena string
 		nombre := Usuario.ObtenerNombre(conexionActual)
@@ -137,6 +146,7 @@
 		}
 	}
 
+	/* Cambia los permisos de salas de chat de  un usario eliminado a un usuario conectado */
 	func enviaNuevosPermisos(nuevosPermisos map[string]net.Conn)  {
 		for mensaje,conexion := range nuevosPermisos {
 			conexion.Write([]byte(mensaje + "\n"))

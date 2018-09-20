@@ -6,6 +6,7 @@
 		"net"
 		"os"
 		"io"
+		"github.com/RodrigoVelazquez99/proyecto1/Controlador"
 	)
 
 	func main() {
@@ -14,6 +15,7 @@
 			fmt.Println("No agregaste correctamente los datos de la direccion y puerto")
 			os.Exit(1)
 		}
+		Controlador.IniciaInterfaz()
 
 		var conexion net.Conn
 		var err error
@@ -49,12 +51,5 @@
 				}
 			}
 			fmt.Print(mensaje + "\n")
-		}
-	}
-
-	func revisaError(err error) {
-		if err != nil {
-			fmt.Println("Fallo la conexion al servidor")
-			os.Exit(1)
 		}
 	}

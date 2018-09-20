@@ -29,6 +29,7 @@
     return lista
   }
 
+  /* Regresa las conexiones a los sockets de todos los usuarios conectados */
   func ObtenerConexiones() []net.Conn {
     conexiones := make([]net.Conn, 0)
     for i:= 0; i < len(Usuarios); i++ {
@@ -39,6 +40,7 @@
     return conexiones
   }
 
+  /* Busca un usuario por nombre */
   func ObtenerNombre(conexion net.Conn) string {
       for _,usuario := range Usuarios {
         if usuario.conexion == conexion {
@@ -48,6 +50,7 @@
     return "SIN_IDENTIFICAR"
   }
 
+  /* Busca un Usuario por conexion del socket */
   func ObtenerConexion(nombre string) net.Conn {
     for _,usuario := range Usuarios {
       if usuario.nombre == nombre {
@@ -57,6 +60,7 @@
     return nil
   }
 
+  /* Obtiene el permiso del usuario en la sala */
   func obtenerPermisoDeSala(usuario Usuario, salaRequerida string) string {
     for sala,permiso := range usuario.salas {
       if sala == salaRequerida {
@@ -66,6 +70,7 @@
     return "NO_EXISTE_LA_SALA"
   }
 
+  /* Regresa las conexiones de los sockets de los miembros de una sala */
   func obtenerMiembrosSala(salaRequerida string) []net.Conn {
     destinatarios := make([]net.Conn, 0)
     for _, usuario := range Usuarios {
@@ -79,6 +84,7 @@
     return destinatarios
   }
 
+  /* Revisa que la conexion del socket pertenezca a algun usuario */
   func UsuarioIdentificado(conexion net.Conn) bool {
     for _,usuario := range Usuarios {
       if usuario.conexion == conexion {
@@ -87,6 +93,7 @@
     }
     return false
   }
+
 
   func BuscaUsuarioPorNombre(nombreActual string) Usuario{
     user := Usuario{nombre: "SIN_IDENTIFICAR",estado: "",salas:nil, solicitudes:nil, conexion: nil}
@@ -385,6 +392,7 @@
     }
   }
 
+  /* Acepta la solicitud para unirse a la sala */
   func AceptarSolicitud(conexion net.Conn, entrada string) ([]net.Conn, string) {
     var mensaje string
     destinatarios := make([]net.Conn, 0)
@@ -417,6 +425,7 @@
     return destinatarios, mensaje
   }
 
+  /* Envia el mensaje a los miembros de una sala */
   func MensajeSala(conexion net.Conn, entrada string) (string, []net.Conn, string) {
     destinatarios := make([]net.Conn, 0)
     palabras := separaPalabras(entrada)
@@ -446,6 +455,7 @@
     return salaDestino, destinatarios, mensaje
   }
 
+  /* Identica la bandera en el mensaje*/
   func IdentificaBandera(conexion net.Conn, entrada []byte) (string) {
     mensaje := string(entrada)
     nombre := ObtenerNombre(conexion)
