@@ -1,12 +1,15 @@
 # proyecto1
 
 Chat programado en Go
+
 Modelado y Programacion
+
 Go version 1.10.1
 
-#Autor
+# Autor
 
 Velázquez Cruz Rodrigo Fernando
+
 Numero de cuenta UNAM: 315254565
 
 ## Dependencias
