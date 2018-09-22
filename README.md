@@ -38,6 +38,8 @@ $ go get github.com/mattn/go-gtk/gtk
 $ go get github.com/mattn/go-gtk/glib
 ```
 
+[GTK+3 3.20] (ftp.gnome.org/pub/gnome/sources/gtk+/3.20/gtk+-3.20.0.tar.xz)
+
 ## Levantar el servidor
 
 ```bash
