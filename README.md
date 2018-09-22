@@ -23,6 +23,19 @@ Estas bibliotecas van en el directorio $GOPATH
 * github.com/mattn/go-gtk/glib
 * github.com/mattn/go-gtk/gtk
 
+Instalacion :
+
+```bash
+$ sudo apt-get install libgtk-3-dev libcairo2-dev libglib2.0-dev
+```
+
+```bash
+$ go get github.com/mattn/go-gtk/gtk
+```
+
+```bash
+$ go get github.com/mattn/go-gtk/glib
+```
 
 ## Levantar el servidor
 

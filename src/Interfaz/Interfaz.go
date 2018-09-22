@@ -42,6 +42,7 @@ func IniciaInterfaz(conexion net.Conn) {
     boton := gtk.NewButtonWithLabel("Enviar")
     boton.Connect("clicked", func () {
         mensajes = append(mensajes, entrada.GetText())
+        entrada.SetText("")
     })
     botones.Add(boton)
     framebox1.PackStart(botones, false, false, 0)
@@ -89,8 +90,8 @@ func RecibeMensajes(buffer *gtk.TextBuffer, inicia gtk.TextIter, acaba gtk.TextI
 					break
 				}
 			}
-      buffer.GetStartIter(&inicia)
-      buffer.Insert(&inicia, mensaje)
       buffer.GetEndIter(&acaba)
+      buffer.Insert(&acaba, mensaje)
+      buffer.GetStartIter(&inicia)
 		}
 }
