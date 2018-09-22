@@ -17,6 +17,7 @@ Numero de cuenta UNAM: 315254565
 * libgtk-3-dev
 * libglib2.0-dev
 * libcairo2-dev
+* GTK+ 3.20
 
 Estas bibliotecas van en el directorio $GOPATH
 
