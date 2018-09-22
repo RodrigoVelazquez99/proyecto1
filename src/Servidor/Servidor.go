@@ -6,7 +6,7 @@
 		"os"
 		"io"
 		"bytes"
-		"github.com/RodrigoVelazquez99/proyecto1/Usuario"
+		"github.com/RodrigoVelazquez99/proyecto1/src/Usuario"
 	)
 
 	/**
@@ -21,8 +21,8 @@
 		}
 		fmt.Println("  Iniciando el servidor .....  ")
 		servidor, err := net.Listen("tcp", os.Args[1] + ":" + os.Args[2])
-        fmt.Println("Conectado en: " + os.Args[1])
-        fmt.Println("Puerto: " + os.Args[2])
+        fmt.Println("  Conectado en: " + os.Args[1])
+        fmt.Println("  Puerto: " + os.Args[2])
 	 	revisaError(err)
 		Usuario.InicializaUsuarios()
 		for {
