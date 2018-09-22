@@ -1,10 +1,8 @@
 	package main
 
 	import (
-		"bufio"
 		"fmt"
 		"net"
-		"io"
 		"os"
 		"github.com/RodrigoVelazquez99/proyecto1/src/Interfaz"
 	)
@@ -23,9 +21,8 @@
 				break
 			}
 		}
-		go Interfaz.IniciaInterfaz()
+		go Interfaz.IniciaInterfaz(conexion)
 		defer conexion.Close()
-		go RecibeMensajes(conexion)
 		EnviaMensajes()
 	}
 
@@ -35,18 +32,5 @@
 			if mensaje != "" {
 				conexion.Write([]byte(mensaje + "\n"))
 			}
-		}
-	}
-
-	func RecibeMensajes(conexion net.Conn) {
-		for {
-	    mensaje, err := bufio.NewReader(conexion).ReadString('\n')
-			if err != nil {
-				if err == io.EOF {
-					break
-				}
-			}
-			fmt.Print(mensaje + "\n")
-			Interfaz.ImprimirMensaje(string(mensaje + "\n"))
 		}
 	}

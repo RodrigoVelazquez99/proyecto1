@@ -3,17 +3,18 @@ package Interfaz
 import (
   "github.com/mattn/go-gtk/glib"
   "github.com/mattn/go-gtk/gtk"
+  "net"
+  "io"
+  "bufio"
 )
 
 var mensajes []string
-var salida []string
 
 /* Interfaz grafica del usuario */
 
-func IniciaInterfaz() {
+func IniciaInterfaz(conexion net.Conn) {
     gtk.Init(nil)
     mensajes = make([]string, 0)
-    salida = make([]string, 0)
     ventana := gtk.NewWindow(gtk.WINDOW_TOPLEVEL)
     ventana.SetPosition(gtk.WIN_POS_CENTER)
     ventana.SetTitle("Chat")
@@ -51,10 +52,7 @@ func IniciaInterfaz() {
     var iniciaLinea, acabaLinea gtk.TextIter
     buffer := texto.GetBuffer()
     buffer.GetStartIter(&iniciaLinea)
-      if len(salida) != 0 {
-        msg := ObtenerSalida()
-        buffer.Insert(&iniciaLinea, msg)
-      }
+    go RecibeMensajes(buffer,iniciaLinea, acabaLinea, conexion)
     buffer.GetEndIter(&acabaLinea)
     entradaMensajes.Add(texto)
     framebox2.Add(entradaMensajes)
@@ -77,29 +75,22 @@ func ObtenerMensaje() string {
   return mensaje
 }
 
-func ObtenerSalida() string {
-  if len(salida) == 0 {
-    return ""
-  }
-  mensaje := salida[0]
-  if len(salida) == 1 {
-    limpiaSalida()
-    return mensaje
-  }
-  salida = salida[1:]
-  return mensaje
-}
-
-func ImprimirMensaje(mensaje string) {
-  salida = append(salida, mensaje)
-}
-
 func limpiaMensajes()  {
   nuevaLista := make([]string, 0)
   mensajes = nuevaLista
 }
 
-func limpiaSalida()  {
-  nuevaSalida := make([]string, 0)
-  salida = nuevaSalida
+
+func RecibeMensajes(buffer *gtk.TextBuffer, inicia gtk.TextIter, acaba gtk.TextIter, conexion net.Conn) {
+		for {
+	    mensaje, err := bufio.NewReader(conexion).ReadString('\n')
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+			}
+      buffer.GetStartIter(&inicia)
+      buffer.Insert(&inicia, mensaje)
+      buffer.GetEndIter(&acaba)
+		}
 }
