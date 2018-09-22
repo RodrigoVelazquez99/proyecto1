@@ -44,6 +44,4 @@ $ go build
 
 ### Errores conocidos
 
-Error con la interfaz grafica, se ingresa el texto por la interfaz, pero el texto recibido del servidor se imprime unicamente en terminal.
-
 Faltan pruebas unitarias.
