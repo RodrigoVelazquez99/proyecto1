@@ -17,25 +17,33 @@ Numero de cuenta UNAM: 315254565
 * libgtk-3-dev
 * libglib2.0-dev
 * libcairo2-dev
+* libgtk+2.0
+* libgtksourceview2.0-dev
 * GTK+ 3.20
 
-Estas bibliotecas van en el directorio $GOPATH
+Esta biblioteca va en el directorio $GOPATH
 
-* github.com/mattn/go-gtk/glib
 * github.com/mattn/go-gtk/gtk
 
 Instalacion :
 
 ```bash
-$ sudo apt-get install libgtk-3-dev libcairo2-dev libglib2.0-dev
-```
-
-```bash
 $ go get github.com/mattn/go-gtk/gtk
 ```
-
 ```bash
-$ go get github.com/mattn/go-gtk/glib
+$ sudo apt-get install libgtk-3-dev 
+```
+```bash 
+$ sudo apt-get install libcairo2-dev 
+```
+```bash 
+$ sudo apt-get install libglib2.0-dev
+```
+```bash
+$ sudo apt-get install libgtk+2.0
+```
+```bash
+$ sudo apt-get install libgtksourceview2.0-dev
 ```
 
 ## Levantar el servidor
